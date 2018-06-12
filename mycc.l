@@ -1,5 +1,5 @@
 /* TO BE COMPLETED */
-
+%x include
 %option noyywrap
 %option yylineno
 %option nounistd
@@ -7,9 +7,12 @@
 %{
 #include "global.h"
 #include "mycc.h"
+#define MAX_INCLUDE_DEPTH 5
 
 static int localvar = 3;
+static int lineCounter = 1;
 
+static void include_file(char * filename);
 static int install_id();
 static int install_int();
 static int install_oct();
@@ -17,6 +20,9 @@ static int install_hex();
 static int install_chr();
 static int install_fp();
 static int install_str();
+    
+YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
+int include_stack_ptr = 0;
 %}
 
 digit           [0-9]
@@ -31,7 +37,8 @@ str             \"(\\\"|\\\n|[^"])*\"
 
 %%
 
-[ \t\v\n\f\r]                  /* skip white space */
+[ \t\v\f\r]                    /* skip white space */
+[\n]                           { lineCounter++; }
 ___                            /* TO BE COMPLETED: ignore inline and multiline comments */
 {id}                           { return install_id(); }
 {oct}                          { return install_oct(); }
@@ -65,12 +72,56 @@ ___                            /* TO BE COMPLETED: ignore inline and multiline c
 "%>"                           { return '}'; }
 "<:"                           { return '['; }
 ":>"                           { return ']'; }
-"//"[^\n]*                     { /*ignore comments*/ }
+"//"[^\n]*                     { /*ignore inline comments*/ }
+"#"include                     { BEGIN(include); }
+<include>[ \t\<]*              { /* skip white space and < */ }
+<include>[^ \t\n\<\>]+         {
+									if ( include_stack_ptr >= MAX_INCLUDE_DEPTH ){
+                                    	fprintf( stderr, "Includes nested too deeply" );
+                                    	exit( 1 );
+                                	}
+                                	include_stack[include_stack_ptr++] = YY_CURRENT_BUFFER;
+                                	yyin = fopen( yytext, "r" );
+                                	if ( ! yyin ){
+                                    	printf("File not found\n");
+                                    	exit(1);
+                                	}
+                               }
+<include>[\>\n]                {
+									yy_switch_to_buffer(
+                                	yy_create_buffer( yyin, YY_BUF_SIZE ) );
+                                	BEGIN(0);
+                               }
+<<EOF>>                        {
+									if ( --include_stack_ptr < 0 ){
+                                    	yyterminate();
+                                	} else{
+                                   		yy_delete_buffer( YY_CURRENT_BUFFER );
+                                    	yy_switch_to_buffer(
+                                    	include_stack[include_stack_ptr] );
+                                	}
+                               }
 [!$%&()*+,\-./:;<=>?\[\]^{|}~] { return yytext[0]; }
-.                              { yyerror("Unknown character ignored"); }
+
 
 %%
 
+/* include a file */
+static void include_file(char * filename){
+	if (include_stack_ptr >= MAX_INCLUDE_DEPTH ){
+		error("Includes nested too deeply");
+		exit(1);
+	}
+	include_stack[include_stack_ptr++] = YY_CURRENT_BUFFER;
+	yyin = fopen( filename, "r" );
+	if (!yyin){
+		//char * str;
+		//sprintf(str, "Couldn't include file %s at line %d", yytext, lineCounter);
+		error("Couldn't find the included file");
+	}
+	yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE));
+}
+	
 /* install_id - add identifier to symbol table if not already there */
 static int install_id()
 {
