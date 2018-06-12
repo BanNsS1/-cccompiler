@@ -20,8 +20,8 @@ Symbol *lookup(const char *s)
 {
 	int i;
 	for(i = 0; i < nextIndex; i++){
-		if(strcmp(symbols[i], s) == 0)
-			return symbols[i];
+		if(strcmp(symbols[i].lexptr, s) == 0)
+			return &symbols[i];
 	}
 
 	//Error: Couldn't find that symbol.
@@ -35,9 +35,8 @@ Symbol *insert(const char *s, int token)
 	}
 	
 	symbols[nextIndex].token = token;
-	symbols[nextIndex].lexptr = malloc(strlen(s) * sizeof(char))
-	strcpy(symbols[nextIndex].lexptr, s);
+	symbols[nextIndex].lexptr = s;
 
 	nextIndex++;
-	return symbols[nextIndex-1];
+	return &symbols[nextIndex-1];
 }

@@ -1,0 +1,8 @@
+reflex
+*.o
+lex.yy.cpp
+lex.yy.h
+mycc
+mycc.c
+mycc.h
+mycc.output

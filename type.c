@@ -38,7 +38,7 @@ Type mkfloat()
 }
 
 Type mkret(Type type)
-{ char *s;
+{ const char *s;
   if (type)
   { s = strrchr(type, ')');
     if (s)

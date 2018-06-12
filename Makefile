@@ -1,8 +1,8 @@
 CC=c++
-YACC=bison -y
-#YACC=yacc
-LEX=reflex/bin/reflex --bison
-#LEX=flex
+#YACC=bison -y
+YACC=yacc
+#LEX=reflex/bin/reflex --bison
+LEX=flex
 #LEX=lex
 LIBS=reflex/lib/libreflex.a
 COFLAGS=-g -O2
