@@ -12,7 +12,6 @@
 static int localvar = 3;
 static int lineCounter = 1;
 
-static void include_file(char * filename);
 static int install_id();
 static int install_int();
 static int install_oct();
@@ -106,22 +105,6 @@ ___                            /* TO BE COMPLETED: ignore inline and multiline c
 
 %%
 
-/* include a file */
-static void include_file(char * filename){
-	if (include_stack_ptr >= MAX_INCLUDE_DEPTH ){
-		error("Includes nested too deeply");
-		exit(1);
-	}
-	include_stack[include_stack_ptr++] = YY_CURRENT_BUFFER;
-	yyin = fopen( filename, "r" );
-	if (!yyin){
-		//char * str;
-		//sprintf(str, "Couldn't include file %s at line %d", yytext, lineCounter);
-		error("Couldn't find the included file");
-	}
-	yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE));
-}
-	
 /* install_id - add identifier to symbol table if not already there */
 static int install_id()
 {
