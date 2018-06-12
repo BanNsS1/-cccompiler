@@ -65,6 +65,7 @@ ___                            /* TO BE COMPLETED: ignore inline and multiline c
 "%>"                           { return '}'; }
 "<:"                           { return '['; }
 ":>"                           { return ']'; }
+"//"[^\n]*                     { /*ignore comments*/ }
 [!$%&()*+,\-./:;<=>?\[\]^{|}~] { return yytext[0]; }
 .                              { yyerror("Unknown character ignored"); }
 
