@@ -1,19 +1,43 @@
-/* TODO: TO BE COMPLETED */
-
 #include "global.h"
+#define MAX_SYMBOLS 512
+#define MAX_LENGTH 1024
 
-/* TODO: define a symbol table/array, reuse project Pr1 */
+
+/*
+Symbol defined at global.h
+{
+	const char *lexptr;
+	int  token;
+	int  localvar;		not needed any longer
+}
+*/
+
+Symbol symbols[MAX_SYMBOLS];
+int nextIndex = 0;
+
 
 Symbol *lookup(const char *s)
 {
-        /* TODO: TO BE COMPLETED */
+	int i;
+	for(i = 0; i < nextIndex; i++){
+		if(strcmp(symbols[i], s) == 0)
+			return symbols[i];
+	}
 
+	//Error: Couldn't find that symbol.
 	return NULL;
 }
 
 Symbol *insert(const char *s, int token)
 {
-        /* TODO: TO BE COMPLETED */
+	if(strlen(s) > MAX_LENGTH){
+		//Error: Cannot allocate more than MAX_SYMBOLS symbols.
+	}
+	
+	symbols[nextIndex].token = token;
+	symbols[nextIndex].lexptr = malloc(strlen(s) * sizeof(char))
+	strcpy(symbols[nextIndex].lexptr, s);
 
-	return NULL;
+	nextIndex++;
+	return symbols[nextIndex-1];
 }
