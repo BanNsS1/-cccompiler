@@ -3,6 +3,7 @@
 %{
 
 #include "lex.yy.h"
+#include "shared.h"
 #include "global.h"
 
 #define MAXFUN 100
@@ -10,6 +11,8 @@
 
 static struct ClassFile cf;
 
+/* main file name*/
+	
 /* stacks of symbol tables and offsets, depth is just 2 in C (global/local) */
 static Table *tblptr[2];
 static int offset[2];
@@ -381,10 +384,13 @@ int main(int argc, char **argv)
 	if (!cf.methods)
 		error("Out of memory");
 
-	if (argc > 1)
+	if (argc > 1){
 		if (!(yyin = fopen(argv[1], "r")))
 			error("Cannot open file for reading");
-
+		else
+			main_file = argv[1];
+	}else
+		main_file = (char*) "";
 	if (yyparse() || errnum > 0)
 		error("Compilation errors: class file not saved");
 
