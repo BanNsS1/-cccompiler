@@ -11,8 +11,8 @@ CIFLAGS=-I. -Ireflex/include
 CMFLAGS=
 CFLAGS=$(CWFLAGS) $(COFLAGS) $(CIFLAGS) $(CMFLAGS)
 all:		mycc
-mycc:		mycc.c bytecode.o error.o init.o javaclass.o lex.yy.cpp symbol.o table.o type.o backpatch.o
-		$(CC) $(CFLAGS) -o mycc mycc.c bytecode.o error.o init.o javaclass.o lex.yy.cpp symbol.o table.o type.o backpatch.o $(LIBS)
+mycc:		mycc.c bytecode.o error.o init.o javaclass.o lex.yy.cpp symbol.o table.o type.o backpatch.o shared.o
+		$(CC) $(CFLAGS) -o mycc mycc.c bytecode.o error.o init.o javaclass.o lex.yy.cpp symbol.o table.o type.o backpatch.o shared.o $(LIBS)
 mycc.c:		mycc.l mycc.y
 		$(LEX) -+ --header-file=lex.yy.h mycc.l
 		$(YACC) -o mycc.c -d -v mycc.y

@@ -7,21 +7,9 @@
 %{
 #include "global.h"
 #include "mycc.h"
-#include "shared.h"
-#define MAX_INCLUDE_DEPTH 5
 
 static int localvar = 3;
 YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
-int include_line_counter[MAX_INCLUDE_DEPTH] = {};
-char * include_file_name[MAX_INCLUDE_DEPTH];
-int include_stack_ptr = -1;
-bool in_included_file = false;
-
-int lineCounter = 1;
-
-static void count_line();
-static int get_line();
-static char * get_current_file();
 
 static int install_id();
 static int install_int();
@@ -87,20 +75,16 @@ ___                            /* TO BE COMPLETED: ignore inline and multiline c
 									char * filename = (char *) malloc(sizeof(char *) * 256);
 									strcpy(filename, yytext);
 									if ( include_stack_ptr >= MAX_INCLUDE_DEPTH -1 ){
-										char error_msg[256];
-										sprintf(error_msg, "%s:%d: Includes nested too deeply", get_current_file(), get_line());
-                                    	error(error_msg);
-                                    	exit(1);
+										error("Includes nested too deeply");
 									}
 									include_stack_ptr++;
 									include_stack[include_stack_ptr] = YY_CURRENT_BUFFER;
-									include_line_counter[include_stack_ptr] = 1;
 									include_file_name[include_stack_ptr] = filename;
                                 	yyin = fopen(filename, "r" );
                                 	if ( ! yyin ){
 										char error_msg[256];
-										sprintf(error_msg, "%s:%d: Include file %s not found", get_current_file(), get_line(), filename);
-                                    	exit(1);
+										sprintf(error_msg, "Include file %s not found", filename);
+										error(error_msg);
                                 	}
 									in_included_file = true;
                                }
@@ -123,27 +107,6 @@ ___                            /* TO BE COMPLETED: ignore inline and multiline c
 
 
 %%
-
-static void count_line(){
-	if(!in_included_file)
-		lineCounter++;
-	else
-		include_line_counter[include_stack_ptr]++;
-}
-
-static int get_line(){
-	if(!in_included_file)
-		return lineCounter;
-	else
-		return include_line_counter[include_stack_ptr];
-}
-
-static char * get_current_file(){
-	if(!in_included_file)
-		return main_file;
-	else
-		return include_file_name[include_stack_ptr];
-}
 	
 /* install_id - add identifier to symbol table if not already there */
 static int install_id()

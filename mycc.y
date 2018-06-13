@@ -3,7 +3,6 @@
 %{
 
 #include "lex.yy.h"
-#include "shared.h"
 #include "global.h"
 
 #define MAXFUN 100
@@ -322,7 +321,10 @@ expr    : ID   '=' expr { error("= operator not implemented"); }
         | NN ID         { error("pre -- operator not implemented"); }
         | ID PP         { error("post ++ operator not implemented"); }
         | ID NN         { error("post -- operator not implemented"); }
-        | ID            { error("variable use not implemented"); }
+        | ID            { 
+							error("variable use not implemented");
+		
+		}
         | INT8          { emit2(bipush, $1); }
         | INT16         { emit3(sipush, $1); }
         | INT32         { emit2(ldc, constant_pool_add_Integer(&cf, $1)); }

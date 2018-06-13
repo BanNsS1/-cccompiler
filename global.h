@@ -87,7 +87,7 @@ extern int isstr(Type type);
 extern int iseq(Type type1, Type type2);
 
 extern void init(void);
-extern void error(const char*);
+extern void error(const char *msg);
 
 extern char *yytext;
 extern int yylineno;
@@ -97,5 +97,28 @@ extern int yyparse();
 extern int yyerror(const char*);
 
 extern int errnum;
+
+/* shared */
+/* Max depth of each include: Avoids infinite include loops */
+#define MAX_INCLUDE_DEPTH 10
+/* Main file name */
+extern char * main_file;
+
+/* Included files name */
+extern char * include_file_name[MAX_INCLUDE_DEPTH];
+
+/* Main file line counter */
+extern int lineCounter;
+
+/* Included files line counter */
+extern int include_line_counter[MAX_INCLUDE_DEPTH];
+
+/* Include files stack pointer (index) */
+extern int include_stack_ptr;
+extern bool in_included_file;
+
+extern void count_line();
+extern int get_line();
+extern char * get_current_file();
 
 #endif
