@@ -283,7 +283,7 @@ expr    : ID   '=' expr {
 			}else if(isint(type)){
 				emit2(istore, place);
 			}else if(isfloat(type)){
-				emit2(fstore, place);
+				error("Unsupported type float");
 			}
 		}
         | ID   PA  expr { error("+= operator not implemented"); }
@@ -296,25 +296,26 @@ expr    : ID   '=' expr {
         | ID   OA  expr { error("|= operator not implemented"); }
         | ID   LA  expr { error("<<= operator not implemented"); }
         | ID   RA  expr { error(">>= operator not implemented"); }
-        | expr OR  expr { error("|| operator not implemented"); }
-        | expr AN  expr { error("&& operator not implemented"); }
-        | expr '|' expr { error("| operator not implemented"); }
-        | expr '^' expr { error("^ operator not implemented"); }
-        | expr '&' expr { error("& operator not implemented"); }
-        | expr EQ  expr { error("== operator not implemented"); }
-        | expr NE  expr { error("!= operator not implemented"); }
-        | expr '<' expr { error("< operator not implemented"); }
-        | expr '>' expr { error("> operator not implemented"); }
-        | expr LE  expr { error("<= operator not implemented"); }
-        | expr GE  expr { error(">= operator not implemented"); }
-        | expr LS  expr { error("<< operator not implemented"); }
-        | expr RS  expr { error(">> operator not implemented"); }
-        | expr '+' expr { error("+ operator not implemented"); }
-        | expr '-' expr { error("- operator not implemented"); }
-        | expr '*' expr { error("* operator not implemented"); }
-        | expr '/' expr { error("/ operator not implemented"); }
-        | expr '%' expr { error("% operator not implemented"); }
-        | '!' expr      { error("! operator not implemented"); }
+		/* https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-6.html */
+        | expr OR  expr { emit(ior); }
+        | expr AN  expr { emit(iand); }
+        | expr '|' expr { emit(ior); }
+        | expr '^' expr { emit(ixor); }
+        | expr '&' expr { emit(iand); }
+        | expr EQ  expr { emit(if_icmpeq); /* if_icmpeq succeeds if and only if value1 = value2 */ }
+        | expr NE  expr { emit(if_icmpne); /* if_icmpne succeeds if and only if value1 ≠ value2 */ }
+        | expr '<' expr { emit(if_icmplt); /* if_icmplt succeeds if and only if value1 < value2 */ }
+        | expr '>' expr { emit(if_icmpgt); /* if_icmpgt succeeds if and only if value1 > value2 */ }
+        | expr LE  expr { emit(if_icmple); /* if_icmple succeeds if and only if value1 ≤ value2 */ }
+        | expr GE  expr { emit(if_icmpne); /* if_icmpne succeeds if and only if value1 ≠ value2 */ }
+        | expr LS  expr { emit(ishl); }
+        | expr RS  expr { emit(ishr); /*arithmetic. for logical iushr*/ }
+        | expr '+' expr { emit(iadd); }
+        | expr '-' expr { emit(isub); }
+        | expr '*' expr { emit(imul); }
+        | expr '/' expr { emit(idiv); }
+        | expr '%' expr { emit(irem); }
+        | '!' expr      { emit(ineg); }
         | '~' expr      { error("~ operator not implemented"); }
         | '+' expr %prec '!'
                         { error("unary + operator not implemented"); }
@@ -332,8 +333,12 @@ expr    : ID   '=' expr {
 			}
         | PP ID         { error("pre ++ operator not implemented"); }
         | NN ID         { error("pre -- operator not implemented"); }
-        | ID PP         { error("post ++ operator not implemented"); }
-        | ID NN         { error("post -- operator not implemented"); }
+		/* https://www.artima.com/underthehood/bytecode3.html 
+			ID PP and ID NN doesn't work
+			Java Error "Unable to pop operand off an empty stack"
+		*/
+        | ID PP         { emit(iadd); emit(iconst_1);  }
+        | ID NN         { emit(iadd); emit(iconst_m1); }
 		| ID            {
 			int level = getlevel(top_tblptr, $1),
 				place = getplace(top_tblptr, $1);
@@ -344,7 +349,7 @@ expr    : ID   '=' expr {
 			}else if(isint(type)){
 				emit2(iload, place);
 			}else if(isfloat(type)){
-				emit2(fload, place);
+				error("Unsupported type float");
 			}
 		}
         | INT8          { emit2(bipush, $1); }
