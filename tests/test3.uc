@@ -1,7 +1,8 @@
-// include test
+// test local variables
+int global;
+
 main()
-{
-	int n;
-	n = n + $0;
-	return $0;
+{ int n;
+  n = $0;
+  return n;
 }

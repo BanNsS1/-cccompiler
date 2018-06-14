@@ -272,7 +272,20 @@ exprs	: exprs ',' expr
 	;
 
 /* TASK 1: TO BE COMPLETED (use pr3 code, then work on assign operators): */
-expr    : ID   '=' expr { error("= operator not implemented"); }
+expr    : ID   '=' expr {
+			int level = getlevel(top_tblptr, $1),
+				place = getplace(top_tblptr, $1);
+			Type type = gettype(top_tblptr, $1);
+			
+			emit(dup);
+			if(level == 0){
+				emit3(putstatic, place);
+			}else if(isint(type)){
+				emit2(istore, place);
+			}else if(isfloat(type)){
+				emit2(fstore, place);
+			}
+		}
         | ID   PA  expr { error("+= operator not implemented"); }
         | ID   NA  expr { error("-= operator not implemented"); }
         | ID   TA  expr { error("*= operator not implemented"); }
@@ -321,9 +334,18 @@ expr    : ID   '=' expr { error("= operator not implemented"); }
         | NN ID         { error("pre -- operator not implemented"); }
         | ID PP         { error("post ++ operator not implemented"); }
         | ID NN         { error("post -- operator not implemented"); }
-        | ID            { 
-							error("variable use not implemented");
-		
+		| ID            {
+			int level = getlevel(top_tblptr, $1),
+				place = getplace(top_tblptr, $1);
+			Type type = gettype(top_tblptr, $1);
+			
+			if(level == 0){
+				emit3(getstatic, place);
+			}else if(isint(type)){
+				emit2(iload, place);
+			}else if(isfloat(type)){
+				emit2(fload, place);
+			}
 		}
         | INT8          { emit2(bipush, $1); }
         | INT16         { emit3(sipush, $1); }

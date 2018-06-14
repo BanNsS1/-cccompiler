@@ -1,6 +1,5 @@
 #include "global.h"
 #define MAX_SYMBOLS 512
-#define MAX_LENGTH 1024
 
 
 /*
@@ -19,24 +18,26 @@ int nextIndex = 0;
 Symbol *lookup(const char *s)
 {
 	int i;
-	for(i = 0; i < nextIndex; i++){
-		if(strcmp(symbols[i].lexptr, s) == 0)
+	for(i = nextIndex-1; i >= 0; i--){
+		if(strcmp(symbols[i].lexptr, s) == 0){
 			return &symbols[i];
+		}else{
+		}
 	}
-
-	//Error: Couldn't find that symbol.
+	
 	return NULL;
 }
 
 Symbol *insert(const char *s, int token)
 {
-	if(strlen(s) > MAX_LENGTH){
-		//Error: Cannot allocate more than MAX_SYMBOLS symbols.
+	if(nextIndex >= MAX_SYMBOLS){
+		char error_msg[256];
+		sprintf(error_msg, "Cannot allocate more than %d symbols", MAX_SYMBOLS);
+		error(error_msg);
 	}
-	
 	symbols[nextIndex].token = token;
 	symbols[nextIndex].lexptr = s;
-
+	
 	nextIndex++;
 	return &symbols[nextIndex-1];
 }
