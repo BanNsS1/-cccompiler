@@ -18,7 +18,8 @@ int nextIndex = 0;
 Symbol *lookup(const char *s)
 {
 	int i;
-	for(i = nextIndex-1; i >= 0; i--){
+	for(i = 0; i < nextIndex; i++){
+	//for(i = nextIndex-1; i >= 0; i--){
 		if(strcmp(symbols[i].lexptr, s) == 0){
 			return &symbols[i];
 		}else{
@@ -36,7 +37,7 @@ Symbol *insert(const char *s, int token)
 		error(error_msg);
 	}
 	symbols[nextIndex].token = token;
-	symbols[nextIndex].lexptr = s;
+	symbols[nextIndex].lexptr = strdup(s);	/*	Fixing segmentation fault problem */
 	
 	nextIndex++;
 	return &symbols[nextIndex-1];

@@ -142,6 +142,33 @@ func	: MAIN '(' ')' Mmain block
 			}
 	| type ptr ID '(' Margs args ')' block
 			{ /* TASK 3: TO BE COMPLETED */
+			/*
+			 	// add code to create function’s type with mkfun()
+				// add new static method to Class file method array (see below)
+				// invoke addwidth, pop tblptr and offset, enter procedure in global table
+			*/
+				Table * table = top_tblptr;
+				Type type = mkfun($6, $1);
+				
+				cf.methods[cf.method_count].access = (enum access_flags)(ACC_PUBLIC | ACC_STATIC);
+				cf.methods[cf.method_count].name = $3->lexptr; // name of the function;
+				cf.methods[cf.method_count].descriptor = type; // type of the function;
+				cf.methods[cf.method_count].code_length = pc; // the code size
+				cf.methods[cf.method_count].code = copy_code();
+				if (!cf.methods[cf.method_count].code)
+					error("Out of memory");
+				cf.methods[cf.method_count].max_stack = 100;
+				cf.methods[cf.method_count].max_locals = top_offset;
+				cf.method_count++;
+				if (cf.method_count > MAXFUN)
+					error("Max number of functions exceeded");
+				// add width information to table
+				addwidth(table, top_offset);
+				// exit the local scope by popping
+				pop_tblptr;
+				pop_offset;
+				// enter the function in the global table
+				enterproc(top_tblptr, $3, type, table);
 			}
 	;
 
@@ -184,10 +211,13 @@ Mmain	:		{ int label1, label2;
 	;
 
 Margs	:		{ /* TASK 3: TO BE COMPLETED */
-			  // Table *table =
-			  init_code();
-			  is_in_main = 0;
-			}
+					// add code to create new table and push on tblptr and push offset 0
+					Table * table = mktable(top_tblptr);
+					push_tblptr(table);
+					push_offset(0);
+					init_code();
+					is_in_main = 0;
+				}
 	;
 
 block	: '{' decls stmts '}'
@@ -222,15 +252,47 @@ args	: args ',' type ptr ID
 	;
 
 list	: list ',' ptr ID
-			{ /* TASK 1 and 4: TO BE COMPLETED */
-			  /* $1 is the type */
-			  /* $3 == 1 means pointer type for ID, e.g. char* so use mkstr() */
-			  $$ = $1;
+			{ // (PR4.pdf) check global level:
+			/*
+				in pdf: list : list ’,’ ID
+				in code: list : list ',' ptr ID
+				so $3 => $4
+				
+				 // add code to enter variable ID in table with type and place
+				 // for local variables, use offset as place and increment offset
+			*/
+				if (top_tblptr->level == 0){ 
+					cf.fields[cf.field_count].access = ACC_STATIC;
+					cf.fields[cf.field_count].name = $4->lexptr;
+					cf.fields[cf.field_count].descriptor = $1;
+					cf.field_count++;
+					enter(top_tblptr, $4, $1, constant_pool_add_Fieldref(&cf, cf.name, $4->lexptr, $1));
+				}else{ // local variable declaration
+					enter(top_tblptr, $4, $1, top_offset++);
+				}
+				$$ = $1;
 			}
 	| type ptr ID	{ /* TASK 1 and 4: TO BE COMPLETED */
-			  /* $2 == 1 means pointer type for ID, e.g. char* so use mkstr() */
-			  $$ = $1;
+			/*
+				Also taken from pr4.pdf. Same as above:
+				in pdf: | type ID
+				in code: | type ptr ID
+				so $2 => $3
+				
+				// add code to enter variable ID in table with type and place
+				// for local variables, use offset as place and increment offset
+			*/
+			if (top_tblptr->level == 0){
+				cf.fields[cf.field_count].access = ACC_STATIC;
+				cf.fields[cf.field_count].name = $3->lexptr;
+				cf.fields[cf.field_count].descriptor = $1;
+				cf.field_count++;
+				enter(top_tblptr, $3, $1, constant_pool_add_Fieldref(&cf, cf.name, $3->lexptr, $1));
+			}else{ // local variable declaration
+				enter(top_tblptr, $3, $1, top_offset++);
 			}
+			$$ = $1;
+		}
 	;
 
 ptr	: /* empty */	{ $$ = 0; }
@@ -255,10 +317,11 @@ stmt    : ';'
         | FOR '(' expr P ';' L expr M N ';' L expr P N ')' L stmt N
                         { error("for-loop not implemented"); }
         | RETURN expr ';'
-                        { if (is_in_main)
-			  	emit(istore_2); /* TO BE COMPLETED */
-			  else
-			  	error("return int/float not implemented");
+            { 
+				if (is_in_main)
+			  		emit(istore_2); /* TO BE COMPLETED */
+			  	else
+					emit(ireturn);
 			}
 	| BREAK ';'	{ /* BREAK is optional to implement (see Pr3) */
 			  error("break not implemented");
@@ -270,6 +333,7 @@ stmt    : ';'
 exprs	: exprs ',' expr
 	| expr
 	;
+
 
 /* TASK 1: TO BE COMPLETED (use pr3 code, then work on assign operators): */
 expr    : ID   '=' expr {
@@ -358,9 +422,19 @@ expr    : ID   '=' expr {
 	| FLT		{ emit2(ldc, constant_pool_add_Float(&cf, $1)); }
 	| STR		{ emit2(ldc, constant_pool_add_String(&cf, constant_pool_add_Utf8(&cf, $1))); }
 	| ID '(' exprs ')'
-			{ /* TASK 3: TO BE COMPLETED */
-			  error("function call not implemented");
-			}
+		{ 
+			/* TASK 3: TO BE COMPLETED */
+			/* from pr4.pdf */
+			emit3(
+				invokestatic,
+				constant_pool_add_Methodref(
+					&cf, 
+					cf.name, 
+					$1->lexptr, 
+					gettype(top_tblptr, $1)
+				)
+			);
+		}
         ;
 
 K       : /* empty */   { $$ = pc; emit3(ifne, 0); }
