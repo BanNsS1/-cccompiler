@@ -306,9 +306,13 @@ stmts   : stmts stmt
 /* TASK 1: TO BE COMPLETED: */
 stmt    : ';'
         | expr ';'      { emit(pop); }
+		
         | IF '(' expr ')' M stmt
-                        { error("if-then not implemented"); }
-        | IF '(' expr ')' M stmt ELSE N stmt
+			{
+				/* https://www.cs.fsu.edu/~engelen/courses/COP562109/Ch5b.pdf */
+				backpatch($5, pc - $5);
+			}
+		| IF '(' expr ')' M stmt ELSE N stmt 
                         { error("if-then-else not implemented"); }
         | WHILE '(' L expr ')' M stmt N
                         { error("while-loop not implemented"); }
@@ -366,12 +370,12 @@ expr    : ID   '=' expr {
         | expr '|' expr { emit(ior); }
         | expr '^' expr { emit(ixor); }
         | expr '&' expr { emit(iand); }
-        | expr EQ  expr { emit(if_icmpeq); /* if_icmpeq succeeds if and only if value1 = value2 */ }
-        | expr NE  expr { emit(if_icmpne); /* if_icmpne succeeds if and only if value1 ≠ value2 */ }
-        | expr '<' expr { emit(if_icmplt); /* if_icmplt succeeds if and only if value1 < value2 */ }
-        | expr '>' expr { emit(if_icmpgt); /* if_icmpgt succeeds if and only if value1 > value2 */ }
-        | expr LE  expr { emit(if_icmple); /* if_icmple succeeds if and only if value1 ≤ value2 */ }
-        | expr GE  expr { emit(if_icmpne); /* if_icmpne succeeds if and only if value1 ≠ value2 */ }
+        | expr EQ  expr { emit3(if_icmpeq, 8); emit2(bipush,0); /* if_icmpeq succeeds if and only if value1 = value2 */ }
+        | expr NE  expr { emit3(if_icmpne, 8); emit2(bipush,0); /* if_icmpne succeeds if and only if value1 ≠ value2 */ }
+        | expr '<' expr { emit3(if_icmplt, 8); emit2(bipush,0); /* if_icmplt succeeds if and only if value1 < value2 */ }
+        | expr '>' expr { emit3(if_icmpgt, 8); emit2(bipush,0); /* if_icmpgt succeeds if and only if value1 > value2 */ }
+        | expr LE  expr { emit3(if_icmple, 8); emit2(bipush,0); /* if_icmple succeeds if and only if value1 ≤ value2 */ }
+        | expr GE  expr { emit3(if_icmpne, 8); emit2(bipush,0); /* if_icmpne succeeds if and only if value1 ≠ value2 */ }
         | expr LS  expr { emit(ishl); }
         | expr RS  expr { emit(ishr); /*arithmetic. for logical iushr*/ }
         | expr '+' expr { emit(iadd); }
